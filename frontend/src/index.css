@@ -9,8 +9,10 @@ html {
 }
 
 body {
+ 
+  
   margin: 0;
-  background: white;
+  background: rgb(172, 169, 190);
 }
 
 .slide-in-left-enter {

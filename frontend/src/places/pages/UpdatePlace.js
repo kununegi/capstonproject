@@ -1,41 +1,23 @@
-import React,{useEffect, useState} from 'react';
-import {useParams} from 'react-router-dom'
+import React,{useEffect, useState, useContext} from 'react';
+import {useParams, useHistory} from 'react-router-dom'
 import Button from '../../shared/components/FormElements/Button';
 import Input from '../../shared/components/FormElements/Input';
 import { VALIDATOR_MINLENGTH, VALIDATOR_REQUIRE } from '../../shared/Util/Validators';
 import { useForm } from '../../hook/Form-hook';
+import LoadingSpinner from '../../shared/components/Uelement/LoadingSpinner';
 import Card from '../../shared/components/Uelement/Card';
-
-const DUMMY_PLACES =[
-    {
-        id:'pl',
-        title:'Emipre State building',
-        description:'One of the famouns building in the world',
-        image:'https://cdn.pixabay.com/photo/2022/12/06/05/57/branch-7638340_960_720.jpg',
-        address:'20 W 34th St., New York, NY 10001, United States',
-        location:{
-            lat:40.7478496,
-            lng:-73.9894482
-        },
-        creator:'u1'
-    },
-    {
-        id:'p2',
-        title:'Emipre State building',
-        description:'One of the famouns building in the world',
-        image:'https://cdn.pixabay.com/photo/2022/12/06/05/57/branch-7638340_960_720.jpg',
-        address:'20 W 34th St., New York, NY 10001, United States',
-        location:{
-            lat:40.7478496,
-            lng:-73.9894482
-        },
-        creator:'u2'
-    },
-];
+import { useHttpClient } from '../../hook/Http-Hook';
+import ErrorModal from '../../shared/components/Uelement/ErrorModal';
+import { AuthContext } from '../../shared/context/Authcontext';
+import './NewPlace.css'  
 
 const UpdatePlace = () => {
-    const [isLoading, setIsLoading]  = useState(true);
+    const auth = useContext(AuthContext);
+    const {isLoading, error, sendRequest,clearError} =  useHttpClient();
+    const [loadedPlace, setLoadedPlaces] = useState ();
     const placeId = useParams().placeId;
+    const history = useHistory ();
+    
         
         const [formState, inputHandler, setFormData] = useForm({
             title:{
@@ -49,34 +31,60 @@ const UpdatePlace = () => {
         },
         false
         )
-        const identifiedPlace = DUMMY_PLACES.find(p=>p.id ===placeId);    
-        useEffect(()=>{
-            if (identifiedPlace){
 
-            
-            setFormData(
-                {
-                    title:{
-                        value: identifiedPlace.title,
-                        isValid : true
-                    },
-                    description : {
-                        value:identifiedPlace.description,
-                        isValid: true
-                    }
-                },
-                true);
+        useEffect (()=> {
+            const fetchPlace = async ()=>{
+                try {
+                    const responseData = await  sendRequest (`http://localhost:4000/api/places/${placeId}`
+                    );
+                    setLoadedPlaces(responseData.place);
+                    setFormData(
+                        {
+                            title:{
+                                value: responseData.place.title,
+                                isValid : true
+                            },
+                            description : {
+                                value:responseData.place.description,
+                                isValid: true
+                            }
+                        },
+                        true);
+                } catch (err)  {}
+              
             }
-                setIsLoading(false);
-    
-        }, [setFormData, identifiedPlace])
+            fetchPlace();
+        },[sendRequest,placeId, setFormData])
         
-        
-        const placeUpdateSubmitHandler = event =>{
-            event.preventDefault()
-            console.log(formState.inputs)
+                
+        const placeUpdateSubmitHandler = async event =>{
+            event.preventDefault();
+            try {
+                await sendRequest(`http://localhost:4000/api/places/${placeId}`,
+                'PATCH',
+                JSON.stringify({
+                    title:formState.inputs.title.value,
+                    description: formState.inputs.description.value
+                }),
+                {
+                    'Content-Type':'application/json'
+                });
+                history.push('/' + auth.userId+ '/places')              
+
+            } catch (err) {}
+            
+          
         };
-  if(!identifiedPlace){
+
+        if (isLoading){
+            return (
+                <div className='center'>
+                    <LoadingSpinner />
+                </div>
+            )
+        }
+
+  if(!loadedPlace && !error){
     return (
     <div className='center'> 
     <Card>
@@ -85,15 +93,11 @@ const UpdatePlace = () => {
     </div>
   );
 }
-if (isLoading){
+
     return (
-        <div className='center'>
-            <h2> Loading .....</h2>
-        </div>
-    )
-}
-    return (
-   <form className='place-form' onSubmit={placeUpdateSubmitHandler}>
+       <>
+       <ErrorModal error = {error} onClear = {clearError} />
+   {!isLoading && loadedPlace && ( <form className='place-form' onSubmit={placeUpdateSubmitHandler}>
     <Input  
     id="title" 
     element="input" 
@@ -102,8 +106,8 @@ if (isLoading){
     validators ={[VALIDATOR_REQUIRE()]}
     errorText= "Please enter a valid title"
     onInput ={inputHandler}
-    value={formState.inputs.title.value}
-    valid ={formState.inputs.title.isValid}
+    value={loadedPlace.title}
+    valid ={true}
     />
 
 <Input  
@@ -113,13 +117,13 @@ if (isLoading){
     validators ={[VALIDATOR_MINLENGTH(5)]}
     errorText= "Please enter a valid description (min 5 character)."
     onInput ={inputHandler}
-    value={formState.inputs.description.value}
-    valid ={formState.inputs.description.isValid}
+    value={loadedPlace.description}
+    valid ={true}
     />
     <Button type="submit" disabled={!formState.isValid}> UPDATE PLACE</Button> 
-   </form>
+   </form> )}
       
-    
+   </>
   )
     }
 

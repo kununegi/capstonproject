@@ -1,9 +1,26 @@
+/* .user-item-div {
+  display:grid;
+  grid-template-columns: 100% 100%;
+} */
 .user-item {
-    margin: 1rem;
+  margin: 2rem;
+  width: calc(45% - 2rem);
+  /* width: 95%; */
+  min-width: 20rem;
+}
+ 
+/* .user-item {
+  display:inline-flex;
+    margin-top: 25%;
+    margin:1rem 2.5rem 1rem 2.5rem;
     width: calc(45% - 2rem);
     min-width: 17.5rem;
-  }
-  
+    display:inline-grid;
+    
+    align-items: center;
+    grid-template-columns: 100% 100%;
+  } */
+   
   .user-item a {
     display: flex;
     align-items: center;

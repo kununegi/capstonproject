@@ -2,7 +2,7 @@ import React from 'react';
 
 import './element.css';
 
-const Element = props => {
+const Avatar = props => {
   return (
     <div className={`avatar ${props.className}`} style={props.style}>
       <img
@@ -14,4 +14,4 @@ const Element = props => {
   );
 };
 
-export default Element;
+export default Avatar;
